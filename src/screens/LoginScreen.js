@@ -4,6 +4,7 @@ import { Input, Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAuth } from '../context/AuthContext';
 import { user_login } from '../api/api';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation }) => {
@@ -16,6 +17,10 @@ const LoginScreen = ({ navigation }) => {
     const isNonWhiteSpace = /^\S*$/;
     if (!isNonWhiteSpace.test(value)) {
       return 'Password must not contain Whitespaces.';
+    }
+    const isValidLength = /^.{8,16}$/;
+    if (!isValidLength.test(value)) {
+      return 'Password must be 8-16 Characters Long.';
     }
 
     const isContainsUppercase = /^(?=.*[A-Z]).*$/;
@@ -33,36 +38,38 @@ const LoginScreen = ({ navigation }) => {
       return 'Password must contain at least one Digit.';
     }
 
-    const isValidLength = /^.{8,16}$/;
-    if (!isValidLength.test(value)) {
-      return 'Password must be 8-16 Characters Long.';
-    }
     return null;
   };
 
 
-  const handleLogin = async ()=>{
+  const handleLogin = async () => {
     const checkPassword = checkPasswordValidity(password);
-    if(!checkPassword){
-      
-      try {
-        const result = await user_login({ email, password });
-        if (result.access) {
-          await AsyncStorage.setItem('AccessToken', result.access);
-          await AsyncStorage.setItem('RefreshToken', result.refresh);
-          navigation.replace('Home');
-        } else {
-          Alert.alert('Login Error', 'Failed to login.');
-        }
-      } catch (error) {
-        console.error('Login Error:', error);
-        Alert.alert('Network Error', 'Failed to connect to server.');
-      }
-        }
-    
-    else{
-      alert(checkPassword);
+  
+    if (!username || !password) {
+      Alert.alert('Error', 'All fields are required');
+      return;
     }
+  
+    if (!checkPassword) {
+    try {
+      
+      const response = await axios.post('http://192.168.1.153:8000/api/users/login/', {
+        username,
+        password,
+      });
+
+      if (response.status === 200 && response.data.access) {
+        await AsyncStorage.setItem('AccessToken', response.data.access);
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Login Failed', 'Please check your email and password.');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      Alert.alert('Login Failed', 'An error occurred during login. Please try again.');
+    }
+  };
+
   };
 
   return (
@@ -130,6 +137,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#11cfc5',
+    paddingHorizontal:20,
+
   },
   scrollView: {
     alignItems: 'center',
@@ -146,6 +155,7 @@ const styles = StyleSheet.create({
   headerText: {
     color: '#FFFFFF',
     fontSize: 28,
+    
   },
   heroImage: {
     width: 100,

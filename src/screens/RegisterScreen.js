@@ -36,6 +36,11 @@ const RegisterScreen = ({ navigation }) => {
       return 'Password must not contain Whitespaces.';
     }
 
+    const isValidLength = /^.{8,16}$/;
+    if (!isValidLength.test(value)) {
+      return 'Password must be 8-16 Characters Long.';
+    }
+
     const isContainsUppercase = /^(?=.*[A-Z]).*$/;
     if (!isContainsUppercase.test(value)) {
       return 'Password must have at least one Uppercase Character.';
@@ -51,10 +56,6 @@ const RegisterScreen = ({ navigation }) => {
       return 'Password must contain at least one Digit.';
     }
 
-    const isValidLength = /^.{8,16}$/;
-    if (!isValidLength.test(value)) {
-      return 'Password must be 8-16 Characters Long.';
-    }
     return null;
   };
 
@@ -72,52 +73,45 @@ const RegisterScreen = ({ navigation }) => {
     };
   };
 
-  
-  
   const handleRegister = async () => {
     const checkPassword = checkPasswordValidity(password);
-   
+  
     if (!username || !email || !phone_number || !password) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
-
+  
     if (!checkPassword) {
       if (password !== confirmPassword) {
         alert('Passwords do not match.');
         return;
       }
-
-      user_register({
-        username:username,        
-        email: email.toLowerCase(),
-        password: password,
-        phone_number:phone_number,
-      }).then(result => {
-        console.log(result);
-        if (result.status == 200) {
-          AsyncStorage.setItem("AccessToken", result.data.token);
-          navigation.replace("Login");
+  
+      try {
+        const result = await user_register({
+          username,
+          email: email.toLowerCase(),
+          password,
+          phone_number,
+        });
+  
+        if (result.access && result.refresh) {
+          await AsyncStorage.setItem('AccessToken', result.access);
+          await AsyncStorage.setItem('RefreshToken', result.refresh);
+          Alert.alert('Success', 'Registration successful', [
+            { text: 'OK', onPress: () => navigation.navigate('Home') }
+          ]);
+        } else {
+          console.error(result);
+          Alert.alert('Error', 'Registration failed');
         }
-      }).catch(err => {
+      } catch (err) {
         console.error(err);
-      })
+        Alert.alert('Error', 'An error occurred during registration');
+      }
     } else {
       alert(checkPassword);
     }
-
-
-   const result = await onRegister(email, password, username, phone_number);
-    if (result && result.error) {
-      Alert.alert('Error', result.msg);
-    } else {
-      Alert.alert('Success', 'Registration successful', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
-      ]);
-      // generateKeys()
-    }
-
-  
   };
 
   return (
