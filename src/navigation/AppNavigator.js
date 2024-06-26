@@ -34,7 +34,8 @@ export const Layout = () => {
       headerRight:()=> <Button onPress={onLogout} title="Sign Out"/>
     }}></Stack.Screen>) :
     <Stack.Screen name="Registration" component={RegisterScreen}></Stack.Screen>}
-    
+    <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Screen name="Chat" component={ChatScreen} />
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="CommunityList" component={CommunityScreen} />
     </Stack.Navigator>

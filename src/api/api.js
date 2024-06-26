@@ -13,7 +13,12 @@ ApiManager.interceptors.request.use(async config => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+},
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 
 export const user_login = async data =>{
   try{
@@ -29,11 +34,6 @@ export const user_login = async data =>{
       return error.response.data;
   }
 }
-
-export const login = (username, password) => {
-  return ApiManager.post('/users/login/', { username, password });
-};
-
 
 export const user_register = async (data) => {
   try {

@@ -89,14 +89,15 @@ const RegisterScreen = ({ navigation }) => {
       }
 
       user_register({
+        username:username,        
         email: email.toLowerCase(),
         password: password,
+        phone_number:phone_number,
       }).then(result => {
         console.log(result);
         if (result.status == 200) {
-          // AsyncStorage.setItem("username", "Henriette");
           AsyncStorage.setItem("AccessToken", result.data.token);
-          navigation.replace("Home");
+          navigation.replace("Login");
         }
       }).catch(err => {
         console.error(err);
@@ -113,9 +114,10 @@ const RegisterScreen = ({ navigation }) => {
       Alert.alert('Success', 'Registration successful', [
         { text: 'OK', onPress: () => navigation.navigate('Login') }
       ]);
-      generateKeys()
+      // generateKeys()
     }
 
+  
   };
 
   return (
@@ -165,6 +167,7 @@ const RegisterScreen = ({ navigation }) => {
           containerStyle={styles.inputContainer}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
+          
         />
         <TouchableOpacity onPress={() => setSeePassword(!seePassword)}>
           <Text style={styles.forgotPasswordText}>{seePassword ? 'Show Password' : 'Hide Password'}</Text>
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 1,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -226,15 +229,16 @@ const styles = StyleSheet.create({
   card: {
     width: '80%',
     borderRadius: 15,
-    paddingBottom: 5,
+    paddingBottom: 1,
   },
   inputContainer: {
-    marginVertical: 10,
+    marginVertical: 0,
+    color: '#11cfc5',
   },
   registerButton: {
     backgroundColor: '#11cfc5',
     borderRadius: 15,
-    marginTop: 20,
+    marginTop: 10,
   },
   loginText: {
     textAlign: 'center',
@@ -247,7 +251,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '90%',
-    marginTop: 30,
+    marginTop: 15,
   },
   line: {
     flex: 1,

@@ -10,7 +10,6 @@ const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [seePassword, setSeePassword] = useState(true);
-  const [checkValidEmail, setCheckValidEmail] = useState(false);
 
 
   const checkPasswordValidity = value => {
@@ -42,23 +41,26 @@ const LoginScreen = ({ navigation }) => {
   };
 
 
-  const handleLogin = ()=>{
+  const handleLogin = async ()=>{
     const checkPassword = checkPasswordValidity(password);
     if(!checkPassword){
       
-      user_login({
-        username:username,
-        password:password,
-      }).then(result =>{
-        console.log(result);
-        if(result.status == 200){
-          AsyncStorage.setItem("AccessToken",result.data.token)
-          navigation.replace("Home")
+      try {
+        const result = await user_login({ email, password });
+        if (result.access) {
+          await AsyncStorage.setItem('AccessToken', result.access);
+          await AsyncStorage.setItem('RefreshToken', result.refresh);
+          navigation.replace('Home');
+        } else {
+          Alert.alert('Login Error', 'Failed to login.');
         }
-      }).catch(err=>{
-        console.error(err);
-      })
-    }else{
+      } catch (error) {
+        console.error('Login Error:', error);
+        Alert.alert('Network Error', 'Failed to connect to server.');
+      }
+        }
+    
+    else{
       alert(checkPassword);
     }
   };
@@ -84,11 +86,16 @@ const LoginScreen = ({ navigation }) => {
         <Input
           placeholder="Password"
           leftIcon={<Icon name="lock" size={24} color="black" />}
-          secureTextEntry
+          secureTextEntry={!seePassword}
           containerStyle={styles.inputContainer}
           value={password}
           onChangeText={setPassword}
-        />
+          />
+        <TouchableOpacity onPress={() => setSeePassword(!seePassword)}>
+          <Text style={styles.forgotPasswordText}>{seePassword ? 'Show Password' : 'Hide Password'}</Text>
+        </TouchableOpacity>
+
+
         <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>

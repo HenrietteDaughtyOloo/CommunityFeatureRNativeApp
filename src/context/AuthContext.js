@@ -3,7 +3,7 @@ import axios from "axios";
 import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'my-jwt';
-export const API_URL = 'http://192.168.100.145:8000/api';
+export const API_URL = 'http://192.168.1.153:8000/api';
 
 const AuthContext = createContext({});
 

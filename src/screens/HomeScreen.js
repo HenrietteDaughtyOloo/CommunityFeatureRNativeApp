@@ -7,11 +7,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import jwt_decode from "jwt-decode";
 import axios from "axios";
 import { ApiManager } from '../api/api';
+import { AuthProvider } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'
+
+
 
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  // const { communityDetails, setCommunityDetails } = useContext(UserType);
 
   const [communities, setCommunities] = useState([]);
 
@@ -22,16 +25,8 @@ const HomeScreen = () => {
         <Text style={{ fontSize: 16, fontWeight: "bold" }}>IzolaCommuno Chat</Text>
       ),
 
-      headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Ionicons name="chatbox-ellipses-outline" size={24} color="black" />
-          <MaterialIcons
-            name="people-outline"
-            size={24}
-            color="black"
-          />
-        </View>
-      ),
+      headerRight:()=> <Button onPress={() => navigation.navigate('Registration')}title="Sign Out"/>
+
     
         });
   }, []);
@@ -42,11 +37,11 @@ useEffect(() => {
 
 const fetchCommunities = async () => {
   try {
-    const token = await AsyncStorage.getItem('access_token');
+    const token = await AsyncStorage.getItem('AccessToken');
     const response = await axios.get('http://192.168.1.153:8000/api/communities/', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      // headers: {
+      //   'Authorization': `Bearer ${token}`,
+      // },
     });
     setCommunities(response.data);
   } catch (error) {

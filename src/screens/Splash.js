@@ -62,10 +62,13 @@ const styles = StyleSheet.create({
         alignItems:'center',
         justifyContent:'center',
         backgroundColor:'black',
+
     },
     text:{
         fontWeight:'800',
         fontSize:30,
-        color:'#11cfc5',        
+        color:'#11cfc5', 
+        paddingHorizontal: 20,
+       
     },
 });
