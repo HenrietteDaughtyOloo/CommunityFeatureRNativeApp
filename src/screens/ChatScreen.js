@@ -11,60 +11,75 @@ const ChatScreen = () => {
     const socketRef = useRef(null);
     const navigation = useNavigation();
     const route = useRoute();
+    const token = localStorage.getItem('token');
+    const socket = new WebSocket(`ws://http://192.168.1.23:8000/ws/chat/${community_id}/?token=${token}`);    
     const { communityId } = route.params;
-    const secretKey = 'alFocG1CuOmiEXBakswlcxHO9Uhx8dDoJbPXIFllpPw='
+    const secretKey = 'alFocG1CuOmiEXBakswlcxHO9Uhx8dDoJbPXIFllpPw=';
 
     useEffect(() => {
         fetchMessages();
+        const socketUrl = `ws://192.168.1.23:8000/ws/chat/${communityId}/`;
+        socketRef.current = new WebSocket(socketUrl);
 
-        socketRef.current = new WebSocket(`ws://192.168.1.153:8000/ws/chat/${communityId}/`);
+        socketRef.current.onopen = () => {
+            console.log('WebSocket connected');
+        };
 
         socketRef.current.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            setMessages((prevMessages) => [...prevMessages, data.message]);
+            const decryptedMessage = decryptMessage(data.message.content, secretKey);
+            setMessages((prevMessages) => [...prevMessages, { ...data.message, content: decryptedMessage }]);
+        };
+
+        socketRef.current.onerror = (error) => {
+            console.error('WebSocket error:', error);
         };
 
         return () => {
-            socketRef.current.close();
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
         };
-    }, []);
+    }, [communityId]);
 
     const fetchMessages = async () => {
         try {
-            const response = await axios.get(`http://192.168.1.153:8000/api/messages/?community_id=${communityId}`);
+            const response = await axios.get(`http://192.168.1.23:8000/api/messages/?community_id=${communityId}`);
             setMessages(response.data);
         } catch (error) {
             console.error('Error fetching messages:', error);
+            if (axios.isAxiosError(error)) {
+                if (error.response && error.response.status === 401) {
+                    console.log('Authorization error: User not authenticated');
+                } else if (error.response && error.response.status === 404) {
+                    console.log('Resource not found');
+                } else {
+                    console.log('Other Axios error:', error.message);
+                }
+            } else {
+                console.error('Unknown error:', error);
+            }
         }
     };
+    
+    const encryptMessage = (message, secretKey) => {
+        return CryptoJS.AES.encrypt(message, secretKey).toString();
+    };
 
+    const decryptMessage = (encryptedMessage, secretKey) => {
+        const bytes = CryptoJS.AES.decrypt(encryptedMessage, secretKey);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    };
 
-const encryptMessage = (message, secretKey) => {
-    return CryptoJS.AES.encrypt(message, secretKey).toString();
-};
-
-const decryptMessage = (encryptedMessage, secretKey) => {
-    const bytes = CryptoJS.AES.decrypt(encryptedMessage, secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
-};
-
-const sendMessage = async () => {
-    if (newMessage.trim()) {
-        const encryptedMessage = encryptMessage(newMessage, secretKey);
-        socketRef.current.send(JSON.stringify({
-            message: encryptedMessage,
-        }));
-        setNewMessage('');
-    }
-};
-
-socketRef.current.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    const decryptedMessage = decryptMessage(data.message.content, 'your-secret-key');
-    setMessages((prevMessages) => [...prevMessages, { ...data.message, content: decryptedMessage }]);
-};
-
-
+    const sendMessage = async () => {
+        if (newMessage.trim()) {
+            const encryptedMessage = encryptMessage(newMessage, secretKey);
+            socketRef.current.send(JSON.stringify({
+                message: encryptedMessage,
+            }));
+            setNewMessage('');
+        }
+    };
 
     const renderItem = ({ item }) => (
         <View style={styles.messageItem}>

@@ -1,17 +1,8 @@
 import { View,Alert, Text, FlatList, StyleSheet, Button, Image, TouchableOpacity} from 'react-native';
 import React, { useLayoutEffect, useContext,UserType, useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import jwt_decode from "jwt-decode";
 import axios from "axios";
-import { ApiManager } from '../api/api';
-import { AuthProvider } from '../context/AuthContext';
-import { useAuth } from '../context/AuthContext'
-
-
-
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -52,7 +43,9 @@ const checkAuthentication = async () => {
 const fetchCommunities = async () => {
   try {
     const token = await AsyncStorage.getItem('AccessToken');
-    const response = await axios.get('http://192.168.1.153:8000/api/communities/', {
+    if (!token) throw new Error("No access token found");
+
+    const response = await axios.get('http://192.168.1.23:8000/api/communities/', {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -69,20 +62,58 @@ const handleSignOut = async () => {
   navigation.navigate('Login');
 };
 
-const handleJoinLeave = async (item, action) => {
+const refreshToken = async () => {
+  const refreshToken = await AsyncStorage.getItem('RefreshToken');
+  if (!refreshToken) throw new Error("No refresh token found");
+
   try {
-      const token = await AsyncStorage.getItem('AccessToken');
-      await axios.post(`http://192.168.1.153:8000/api/communities/${item.id}/${action}/`, {}, {
-          // headers: {
-          //     'Authorization': `Bearer ${token}`,
-          // },
-      });
-      fetchCommunities();
+    const response = await axios.post('http://192.168.1.23:8000/api/token/refresh/', {
+      refresh: refreshToken
+    });
+
+    const { access, refresh } = response.data;
+    await AsyncStorage.setItem('AccessToken', access);
+    await AsyncStorage.setItem('RefreshToken', refresh);
+    return access;
   } catch (error) {
-      console.error(error);
+    console.error("Token Refresh Error:", error.response ? error.response.data : error.message);
+    throw error;
   }
 };
 
+const handleJoinLeave = async (item, action) => {
+  try {
+    let token = await AsyncStorage.getItem('AccessToken');
+    if (!token) throw new Error("No access token found");
+
+    let response = await axios.post(`http://192.168.1.23:8000/api/communities/${item.id}/${action}/`, {}, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (response.status === 200) {
+      setCommunities(prevCommunities => prevCommunities.map(community =>
+        community.id === item.id ? { ...community, joined: action === 'join' } : community
+      ));
+    } else if (response.status === 401) {
+      token = await refreshToken();
+      response = await axios.post(`http://192.168.1.23:8000/api/communities/${item.id}/${action}/`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.status === 200) {
+        setCommunities(prevCommunities => prevCommunities.map(community =>
+          community.id === item.id ? { ...community, joined: action === 'join' } : community
+        ));
+      } else {
+        console.error("Join/Leave Error:", response.data);
+      }
+    } else {
+      console.error("Join/Leave Error:", response.data);
+    }
+  } catch (error) {
+    console.error("Join/Leave Error:", error.response ? error.response.data : error.message);
+  }
+};
 
 const navigateToCommunityDetail = (item) => {
   if (item.joined) {
@@ -164,7 +195,8 @@ description: {
   color: '#666',
 },
 status:{
-  backgroundColor: '#fff',
+  backgroundColor: '#11cfc5',
+  borderRadius: 15,
 },
 });
 export default HomeScreen

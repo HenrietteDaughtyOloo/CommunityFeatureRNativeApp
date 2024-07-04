@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ApiManager = axios.create({
-  baseURL: 'http://192.168.1.153:8000/api',
+  baseURL: 'http://192.168.1.23:8000/api',
   responseType:'json',
   withCredentials:true
 });
@@ -30,6 +30,12 @@ export const user_register = async (data) => {
   }
 };
 
+export const login = async (credentials) => {
+  const response = await api.post('/login', credentials);
+  const token = response.data.token;
+  localStorage.setItem('token', token);
+  return response.data;
+};
 
 
 export const fetchCommunities = () => {

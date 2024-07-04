@@ -53,7 +53,7 @@ const LoginScreen = ({ navigation }) => {
     if (!checkPassword) {
     try {
       
-      const response = await axios.post('http://192.168.1.153:8000/api/users/login/', {
+      const response = await axios.post('http://192.168.1.23:8000/api/users/login/', {
         username,
         password,
       });

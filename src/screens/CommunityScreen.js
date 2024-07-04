@@ -1,4 +1,3 @@
-// screens/CommunityScreen.js
 import React, { useLayoutEffect, useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, Image, TouchableOpacity} from 'react-native';
 import { useNavigation } from "@react-navigation/native";
@@ -41,7 +40,7 @@ const CommunityScreen = () => {
       setUserId(userId);
 
       axios
-        .get(`http://192.168.100.170:8000/api/users/${userId}`)
+        .get(`http://192.168.1.23:8000/api/users/${userId}`)
         .then((response) => {
           setUsers(response.data);
         })
